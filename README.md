@@ -1,27 +1,33 @@
-# Tìm hiểu một số thuật toán học máy và ứng dụng trong cuộc sống
+# Tìm hiểu về một số thuật toán học máy và ứng dụng trong cuộc sống
 
-Ứng dụng Streamlit minh họa cho tiểu luận học phần Nhập môn Khoa học dữ liệu.
+Ứng dụng Streamlit phục vụ tiểu luận học phần Nhập môn Khoa học dữ liệu.
 
-## Nội dung app
+## Nội dung
 
-- Giới thiệu một số thuật toán học máy: KNN, Decision Tree, Random Forest, Logistic Regression.
-- Sử dụng các bộ dữ liệu thực tế có sẵn trong scikit-learn: Iris, Wine, Breast Cancer.
-- Trực quan hóa dữ liệu bằng biểu đồ.
-- Huấn luyện mô hình học máy.
-- Đánh giá mô hình bằng Accuracy, Precision, Recall, F1-score.
-- Cho phép nhập dữ liệu mới để dự đoán.
+- Giao diện dashboard có background nổi bật
+- Giới thiệu 5 thuật toán học máy:
+  - Linear Regression
+  - Logistic Regression
+  - Decision Tree
+  - K-Nearest Neighbors
+  - Random Forest
+- So sánh thuật toán bằng biểu đồ
+- Trình bày ứng dụng học máy trong đời sống
+- Demo mô hình phân loại bằng Python trên bộ dữ liệu Iris
+- Dự đoán loài hoa bằng mô hình tốt nhất
+- Có biểu đồ, bảng dữ liệu, ma trận nhầm lẫn
 
-## Cách chạy trên máy cá nhân
+## Công nghệ
+
+- Python
+- Streamlit
+- Pandas
+- NumPy
+- Matplotlib
+- Scikit-learn
+
+## Chạy ứng dụng
 
 ```bash
-pip install -r requirements.txt
 streamlit run app.py
-```
-
-## Triển khai trên Streamlit Cloud
-
-Main file path:
-
-```text
-app.py
 ```
