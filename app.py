@@ -1,319 +1,272 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
+import plotly.express as px
 
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.datasets import load_iris, load_wine, load_breast_cancer
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score, f1_score, confusion_matrix
+from sklearn.preprocessing import StandardScaler
+from sklearn.pipeline import Pipeline
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix, classification_report
 
 st.set_page_config(
-    page_title="Student Performance ML App",
-    page_icon="🎓",
+    page_title="Một số thuật toán học máy",
+    page_icon="🤖",
     layout="wide"
 )
 
 st.markdown("""
 <style>
-.stApp {
-    background: radial-gradient(circle at top left, #172554 0, #020617 35%, #020617 100%);
-    color: #f8fafc;
-}
-[data-testid="stSidebar"] {
-    background: linear-gradient(180deg, #020617 0%, #111827 100%);
-    border-right: 1px solid rgba(255,255,255,0.08);
-}
-[data-testid="stSidebar"] * {
-    color: #f8fafc;
-}
-.hero {
-    padding: 34px;
-    border-radius: 24px;
-    background: linear-gradient(135deg, rgba(59,130,246,0.35), rgba(147,51,234,0.32));
-    border: 1px solid rgba(255,255,255,0.12);
-    box-shadow: 0 20px 60px rgba(0,0,0,0.35);
-}
-.hero h1 {
+.main-title {
+    text-align: center;
+    color: #1e3a8a;
     font-size: 42px;
-    line-height: 1.2;
-    margin-bottom: 16px;
+    font-weight: 800;
 }
-.hero p {
-    font-size: 18px;
-    color: #dbeafe;
+.sub-title {
+    text-align: center;
+    color: #334155;
+    font-size: 20px;
 }
 .card {
-    padding: 22px;
-    border-radius: 18px;
-    background: rgba(15,23,42,0.82);
-    border: 1px solid rgba(255,255,255,0.10);
-    box-shadow: 0 12px 35px rgba(0,0,0,0.25);
-}
-.metric-number {
-    font-size: 34px;
-    font-weight: 800;
-    color: #ffffff;
-}
-.metric-label {
-    font-size: 14px;
-    color: #cbd5e1;
-}
-.section-title {
-    font-size: 22px;
-    font-weight: 800;
-    margin-top: 22px;
+    background-color: #f8fafc;
+    padding: 18px;
+    border-radius: 16px;
+    border: 1px solid #e2e8f0;
     margin-bottom: 12px;
 }
-.result-good {
-    padding: 25px;
-    border-radius: 18px;
-    background: linear-gradient(135deg, rgba(34,197,94,0.24), rgba(16,185,129,0.14));
-    border: 1px solid rgba(74,222,128,0.45);
-    text-align: center;
-}
-.result-bad {
-    padding: 25px;
-    border-radius: 18px;
-    background: linear-gradient(135deg, rgba(239,68,68,0.24), rgba(244,63,94,0.14));
-    border: 1px solid rgba(248,113,113,0.45);
-    text-align: center;
-}
-div.stButton > button {
-    width: 100%;
+.metric-box {
+    background-color: #eef2ff;
+    padding: 14px;
     border-radius: 14px;
-    border: 0;
-    padding: 13px 18px;
-    font-weight: 800;
-    color: white;
-    background: linear-gradient(90deg, #2563eb, #9333ea);
-}
-div.stButton > button:hover {
-    color: white;
-    border: 0;
-    filter: brightness(1.12);
+    text-align: center;
 }
 </style>
 """, unsafe_allow_html=True)
 
-# ---------------- DATA ----------------
-np.random.seed(42)
-n = 1000
-df = pd.DataFrame({
-    "Toán": np.random.normal(14, 3, n).clip(0, 20).round(1),
-    "Anh văn": np.random.normal(13.5, 3.2, n).clip(0, 20).round(1),
-    "Tin học": np.random.normal(14.5, 2.8, n).clip(0, 20).round(1),
-    "Tự học/tuần": np.random.randint(1, 26, n),
-    "Vắng học": np.random.randint(0, 12, n),
-    "Hoạt động ngoại khóa": np.random.choice([0, 1], n, p=[0.45, 0.55])
-})
+st.markdown('<div class="main-title">Tìm hiểu một số thuật toán học máy</div>', unsafe_allow_html=True)
+st.markdown('<div class="sub-title">Ứng dụng minh họa bằng Python và Streamlit</div>', unsafe_allow_html=True)
 
-score = (
-    df["Toán"] * 0.28 +
-    df["Anh văn"] * 0.18 +
-    df["Tin học"] * 0.28 +
-    df["Tự học/tuần"] * 0.18 -
-    df["Vắng học"] * 0.45 +
-    df["Hoạt động ngoại khóa"] * 0.8
+st.sidebar.title("⚙️ Cấu hình mô hình")
+
+dataset_name = st.sidebar.selectbox(
+    "Chọn bộ dữ liệu thực tế",
+    ["Iris - Phân loại loài hoa", "Wine - Phân loại rượu vang", "Breast Cancer - Phân loại khối u"]
 )
 
-df["Kết quả"] = np.where(score >= 11.5, "Đạt", "Chưa đạt")
+algorithm_name = st.sidebar.selectbox(
+    "Chọn thuật toán học máy",
+    ["KNN", "Decision Tree", "Random Forest", "Logistic Regression"]
+)
 
-X = df[["Toán", "Anh văn", "Tin học", "Tự học/tuần", "Vắng học", "Hoạt động ngoại khóa"]]
-y = df["Kết quả"]
+test_size = st.sidebar.slider("Tỷ lệ dữ liệu kiểm tra", 0.1, 0.5, 0.2, 0.05)
+random_state = 42
+
+def load_dataset(name):
+    if name.startswith("Iris"):
+        data = load_iris()
+        description = "Bộ dữ liệu Iris dùng để phân loại 3 loài hoa dựa trên chiều dài, chiều rộng đài hoa và cánh hoa."
+    elif name.startswith("Wine"):
+        data = load_wine()
+        description = "Bộ dữ liệu Wine dùng để phân loại rượu vang dựa trên các chỉ số hóa học."
+    else:
+        data = load_breast_cancer()
+        description = "Bộ dữ liệu Breast Cancer dùng để phân loại khối u lành tính hoặc ác tính dựa trên các đặc trưng y khoa."
+    df = pd.DataFrame(data.data, columns=data.feature_names)
+    df["target"] = data.target
+    df["target_name"] = df["target"].apply(lambda x: data.target_names[x])
+    return data, df, description
+
+data, df, dataset_description = load_dataset(dataset_name)
+
+X = df[data.feature_names]
+y = df["target"]
 
 X_train, X_test, y_train, y_test = train_test_split(
-    X, y, test_size=0.2, random_state=42, stratify=y
+    X, y, test_size=test_size, random_state=random_state, stratify=y
 )
 
-model = RandomForestClassifier(n_estimators=150, random_state=42)
+def build_model(name):
+    if name == "KNN":
+        return Pipeline([
+            ("scaler", StandardScaler()),
+            ("model", KNeighborsClassifier(n_neighbors=5))
+        ])
+    if name == "Decision Tree":
+        return DecisionTreeClassifier(max_depth=5, random_state=random_state)
+    if name == "Random Forest":
+        return RandomForestClassifier(n_estimators=120, random_state=random_state)
+    return Pipeline([
+        ("scaler", StandardScaler()),
+        ("model", LogisticRegression(max_iter=1000, random_state=random_state))
+    ])
+
+model = build_model(algorithm_name)
 model.fit(X_train, y_train)
-pred = model.predict(X_test)
+y_pred = model.predict(X_test)
 
-accuracy = accuracy_score(y_test, pred)
-f1 = f1_score(y_test, pred, pos_label="Đạt")
+accuracy = accuracy_score(y_test, y_pred)
+precision = precision_score(y_test, y_pred, average="weighted", zero_division=0)
+recall = recall_score(y_test, y_pred, average="weighted", zero_division=0)
+f1 = f1_score(y_test, y_pred, average="weighted", zero_division=0)
 
-# ---------------- SIDEBAR ----------------
-with st.sidebar:
-    st.markdown("## 🎓 Student Performance")
-    st.caption("Machine Learning App")
-    st.markdown("---")
-    st.markdown("### KHÁM PHÁ")
-    st.markdown("🏠 Trang chủ")
-    st.markdown("📊 Phân tích dữ liệu")
-    st.markdown("🤖 Mô hình & đánh giá")
-    st.markdown("🎯 Dự đoán kết quả")
-    st.markdown("---")
-    st.markdown("### THÔNG TIN")
-    st.info("Ứng dụng sử dụng Random Forest để dự đoán kết quả học tập sinh viên dựa trên điểm số và thói quen học tập.")
+tab1, tab2, tab3, tab4, tab5 = st.tabs([
+    "🏠 Giới thiệu",
+    "📊 Dữ liệu",
+    "📈 Trực quan hóa",
+    "🤖 Huấn luyện mô hình",
+    "🧪 Dự đoán thử"
+])
 
-# ---------------- HERO ----------------
-left, right = st.columns([2.2, 1])
-
-with left:
+with tab1:
+    st.markdown("## 1. Giới thiệu đề tài")
     st.markdown("""
-    <div class="hero">
-        <h1>Dự đoán kết quả học tập sinh viên 🚀</h1>
-        <p>
-        Ứng dụng Machine Learning sử dụng dữ liệu học tập để phân tích,
-        trực quan hóa và dự đoán khả năng đạt/chưa đạt của sinh viên.
-        </p>
-    </div>
-    """, unsafe_allow_html=True)
+    Đề tài **“Tìm hiểu về một số thuật toán học máy và ứng dụng trong cuộc sống”** 
+    tập trung trình bày các thuật toán học máy cơ bản, sau đó triển khai một ứng dụng minh họa 
+    bằng Python và Streamlit.
 
-with right:
-    st.markdown('<div class="card">', unsafe_allow_html=True)
-    st.markdown("### 🎯 Dự đoán nhanh")
-    math = st.slider("Điểm Toán", 0.0, 20.0, 15.0, 0.5)
-    english = st.slider("Điểm Anh văn", 0.0, 20.0, 14.0, 0.5)
-    it = st.slider("Điểm Tin học", 0.0, 20.0, 15.0, 0.5)
-    self_study = st.slider("Số giờ tự học/tuần", 0, 30, 12)
-    absence = st.slider("Số buổi vắng học", 0, 15, 2)
-    activity = st.selectbox("Tham gia ngoại khóa", ["Có", "Không"])
-    st.markdown('</div>', unsafe_allow_html=True)
+    Ứng dụng cho phép người dùng:
+    - Chọn bộ dữ liệu thực tế.
+    - Chọn thuật toán học máy.
+    - Huấn luyện mô hình.
+    - Xem biểu đồ trực quan hóa dữ liệu.
+    - Đánh giá mô hình bằng Accuracy, Precision, Recall và F1-score.
+    - Nhập dữ liệu mới để mô hình dự đoán.
+    """)
 
-# ---------------- METRICS ----------------
-st.markdown('<div class="section-title">Tổng quan ứng dụng</div>', unsafe_allow_html=True)
-m1, m2, m3, m4 = st.columns(4)
-
-metrics = [
-    ("1000", "Dòng dữ liệu sinh viên", "🗃️"),
-    ("5", "Biểu đồ trực quan", "📊"),
-    (f"{accuracy*100:.1f}%", "Độ chính xác mô hình", "✅"),
-    ("Random Forest", "Thuật toán tốt nhất", "🌲")
-]
-
-for col, (num, label, icon) in zip([m1, m2, m3, m4], metrics):
-    with col:
-        st.markdown(f"""
-        <div class="card">
-            <div style="font-size:30px">{icon}</div>
-            <div class="metric-number">{num}</div>
-            <div class="metric-label">{label}</div>
-        </div>
-        """, unsafe_allow_html=True)
-
-# ---------------- CHARTS ----------------
-st.markdown('<div class="section-title">Phân tích dữ liệu khám phá</div>', unsafe_allow_html=True)
-c1, c2, c3 = st.columns(3)
-
-with c1:
-    st.markdown('<div class="card">', unsafe_allow_html=True)
-    st.markdown("#### Phân bố kết quả")
-    counts = df["Kết quả"].value_counts()
-    fig, ax = plt.subplots()
-    ax.pie(counts, labels=counts.index, autopct="%1.1f%%", startangle=90)
-    ax.set_facecolor("#0f172a")
-    fig.patch.set_facecolor("#0f172a")
-    st.pyplot(fig)
-    st.markdown('</div>', unsafe_allow_html=True)
-
-with c2:
-    st.markdown('<div class="card">', unsafe_allow_html=True)
-    st.markdown("#### Điểm trung bình")
-    means = df[["Toán", "Anh văn", "Tin học"]].mean()
-    fig, ax = plt.subplots()
-    ax.bar(means.index, means.values)
-    ax.set_ylim(0, 20)
-    ax.set_ylabel("Điểm")
-    ax.set_facecolor("#0f172a")
-    fig.patch.set_facecolor("#0f172a")
-    ax.tick_params(colors="white")
-    ax.yaxis.label.set_color("white")
-    st.pyplot(fig)
-    st.markdown('</div>', unsafe_allow_html=True)
-
-with c3:
-    st.markdown('<div class="card">', unsafe_allow_html=True)
-    st.markdown("#### Tương quan dữ liệu")
-    corr = df[["Toán", "Anh văn", "Tin học", "Tự học/tuần", "Vắng học"]].corr()
-    fig, ax = plt.subplots()
-    im = ax.imshow(corr)
-    ax.set_xticks(range(len(corr.columns)))
-    ax.set_yticks(range(len(corr.columns)))
-    ax.set_xticklabels(corr.columns, rotation=45, ha="right")
-    ax.set_yticklabels(corr.columns)
-    ax.tick_params(colors="white")
-    ax.set_facecolor("#0f172a")
-    fig.patch.set_facecolor("#0f172a")
-    fig.colorbar(im, ax=ax)
-    st.pyplot(fig)
-    st.markdown('</div>', unsafe_allow_html=True)
-
-# ---------------- MODEL + PREDICTION ----------------
-st.markdown('<div class="section-title">Mô hình Machine Learning & Kết quả dự đoán</div>', unsafe_allow_html=True)
-model_col, predict_col = st.columns([1.4, 1])
-
-with model_col:
-    st.markdown('<div class="card">', unsafe_allow_html=True)
-    st.markdown("### 🤖 Đánh giá mô hình")
-    cm = confusion_matrix(y_test, pred, labels=["Đạt", "Chưa đạt"])
-    fig, ax = plt.subplots()
-    ax.imshow(cm)
-    ax.set_xticks([0, 1])
-    ax.set_yticks([0, 1])
-    ax.set_xticklabels(["Đạt", "Chưa đạt"])
-    ax.set_yticklabels(["Đạt", "Chưa đạt"])
-    ax.set_xlabel("Dự đoán")
-    ax.set_ylabel("Thực tế")
-    for i in range(2):
-        for j in range(2):
-            ax.text(j, i, cm[i, j], ha="center", va="center", color="white", fontsize=16)
-    ax.set_facecolor("#0f172a")
-    fig.patch.set_facecolor("#0f172a")
-    ax.tick_params(colors="white")
-    ax.xaxis.label.set_color("white")
-    ax.yaxis.label.set_color("white")
-    st.pyplot(fig)
-    st.write(f"**Accuracy:** {accuracy*100:.2f}%")
-    st.write(f"**F1-score:** {f1:.3f}")
-    st.markdown('</div>', unsafe_allow_html=True)
-
-with predict_col:
-    input_data = pd.DataFrame([{
-        "Toán": math,
-        "Anh văn": english,
-        "Tin học": it,
-        "Tự học/tuần": self_study,
-        "Vắng học": absence,
-        "Hoạt động ngoại khóa": 1 if activity == "Có" else 0
-    }])
-
-    if st.button("🚀 Dự đoán kết quả"):
-        result = model.predict(input_data)[0]
-        proba = model.predict_proba(input_data).max() * 100
-
-        if result == "Đạt":
-            st.markdown(f"""
-            <div class="result-good">
-                <h1>ĐẠT ✅</h1>
-                <p>Độ tin cậy dự đoán: <b>{proba:.1f}%</b></p>
-                <p>Sinh viên có khả năng đạt kết quả học tập tốt.</p>
-            </div>
-            """, unsafe_allow_html=True)
-        else:
-            st.markdown(f"""
-            <div class="result-bad">
-                <h1>CHƯA ĐẠT ⚠️</h1>
-                <p>Độ tin cậy dự đoán: <b>{proba:.1f}%</b></p>
-                <p>Cần tăng thời gian tự học và giảm số buổi vắng học.</p>
-            </div>
-            """, unsafe_allow_html=True)
-    else:
+    st.markdown("## 2. Một số thuật toán được sử dụng")
+    col1, col2 = st.columns(2)
+    with col1:
         st.markdown("""
         <div class="card">
-            <h3>📌 Hướng dẫn</h3>
-            <p>Điều chỉnh thông tin ở khung bên phải phía trên, sau đó bấm nút dự đoán.</p>
+        <b>KNN</b><br>
+        Phân loại đối tượng mới dựa vào các điểm dữ liệu gần nhất.
         </div>
         """, unsafe_allow_html=True)
 
-# ---------------- TABLE ----------------
-with st.expander("📄 Xem một phần dữ liệu mẫu"):
-    st.dataframe(df.head(30), use_container_width=True)
+        st.markdown("""
+        <div class="card">
+        <b>Decision Tree</b><br>
+        Mô hình cây quyết định, chia dữ liệu theo các điều kiện để đưa ra dự đoán.
+        </div>
+        """, unsafe_allow_html=True)
 
-st.markdown("""
-<br>
-<div style="text-align:center;color:#94a3b8">
-Made with ❤️ using Streamlit & Scikit-learn<br>
-© Student Performance App | Nhập môn Khoa học dữ liệu
-</div>
-""", unsafe_allow_html=True)
+    with col2:
+        st.markdown("""
+        <div class="card">
+        <b>Random Forest</b><br>
+        Kết hợp nhiều cây quyết định để tăng độ chính xác và giảm quá khớp.
+        </div>
+        """, unsafe_allow_html=True)
+
+        st.markdown("""
+        <div class="card">
+        <b>Logistic Regression</b><br>
+        Thuật toán phân loại phổ biến, thường dùng trong các bài toán nhị phân hoặc đa lớp.
+        </div>
+        """, unsafe_allow_html=True)
+
+with tab2:
+    st.markdown("## Thông tin bộ dữ liệu")
+    st.info(dataset_description)
+
+    col1, col2, col3 = st.columns(3)
+    col1.metric("Số dòng dữ liệu", df.shape[0])
+    col2.metric("Số thuộc tính đầu vào", len(data.feature_names))
+    col3.metric("Số lớp cần phân loại", len(data.target_names))
+
+    st.markdown("### 5 dòng dữ liệu đầu tiên")
+    st.dataframe(df.head(), use_container_width=True)
+
+    st.markdown("### Thống kê mô tả")
+    st.dataframe(df[data.feature_names].describe(), use_container_width=True)
+
+with tab3:
+    st.markdown("## Trực quan hóa dữ liệu")
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+        count_df = df["target_name"].value_counts().reset_index()
+        count_df.columns = ["Lớp", "Số lượng"]
+        fig1 = px.bar(count_df, x="Lớp", y="Số lượng", title="Biểu đồ 1: Số lượng mẫu theo từng lớp")
+        st.plotly_chart(fig1, use_container_width=True)
+
+    with col2:
+        fig2 = px.pie(count_df, names="Lớp", values="Số lượng", title="Biểu đồ 2: Tỷ lệ các lớp trong dữ liệu")
+        st.plotly_chart(fig2, use_container_width=True)
+
+    first_feature = data.feature_names[0]
+    second_feature = data.feature_names[1]
+
+    fig3 = px.histogram(df, x=first_feature, color="target_name", title=f"Biểu đồ 3: Phân bố {first_feature}")
+    st.plotly_chart(fig3, use_container_width=True)
+
+    fig4 = px.scatter(
+        df, x=first_feature, y=second_feature, color="target_name",
+        title=f"Biểu đồ 4: Mối quan hệ giữa {first_feature} và {second_feature}"
+    )
+    st.plotly_chart(fig4, use_container_width=True)
+
+    corr = df[data.feature_names].corr()
+    fig5 = px.imshow(corr, text_auto=True, title="Biểu đồ 5: Ma trận tương quan giữa các thuộc tính")
+    st.plotly_chart(fig5, use_container_width=True)
+
+with tab4:
+    st.markdown("## Huấn luyện và đánh giá mô hình")
+    st.write(f"**Bộ dữ liệu:** {dataset_name}")
+    st.write(f"**Thuật toán:** {algorithm_name}")
+
+    col1, col2, col3, col4 = st.columns(4)
+    col1.metric("Accuracy", f"{accuracy:.2%}")
+    col2.metric("Precision", f"{precision:.2%}")
+    col3.metric("Recall", f"{recall:.2%}")
+    col4.metric("F1-score", f"{f1:.2%}")
+
+    st.markdown("### Confusion Matrix")
+    cm = confusion_matrix(y_test, y_pred)
+    cm_df = pd.DataFrame(cm, index=data.target_names, columns=data.target_names)
+    fig_cm = px.imshow(cm_df, text_auto=True, title="Ma trận nhầm lẫn")
+    st.plotly_chart(fig_cm, use_container_width=True)
+
+    st.markdown("### Báo cáo phân loại")
+    report = classification_report(y_test, y_pred, target_names=data.target_names, output_dict=True, zero_division=0)
+    st.dataframe(pd.DataFrame(report).transpose(), use_container_width=True)
+
+with tab5:
+    st.markdown("## Nhập dữ liệu mới để dự đoán")
+
+    input_values = []
+    cols = st.columns(2)
+    for i, feature in enumerate(data.feature_names):
+        min_val = float(df[feature].min())
+        max_val = float(df[feature].max())
+        mean_val = float(df[feature].mean())
+        with cols[i % 2]:
+            value = st.number_input(
+                feature,
+                min_value=min_val,
+                max_value=max_val,
+                value=mean_val
+            )
+            input_values.append(value)
+
+    if st.button("Dự đoán kết quả"):
+        input_df = pd.DataFrame([input_values], columns=data.feature_names)
+        prediction = model.predict(input_df)[0]
+        proba_text = ""
+
+        if hasattr(model, "predict_proba"):
+            probs = model.predict_proba(input_df)[0]
+            proba_text = f"Độ tin cậy cao nhất: {np.max(probs):.2%}"
+
+        st.success(f"Kết quả dự đoán: {data.target_names[prediction]}")
+        if proba_text:
+            st.info(proba_text)
+
+st.markdown("---")
+st.caption("Ứng dụng minh họa cho tiểu luận học phần Nhập môn Khoa học dữ liệu.")

@@ -1,16 +1,27 @@
-# Student Performance Machine Learning App
+# Tìm hiểu một số thuật toán học máy và ứng dụng trong cuộc sống
 
-Ứng dụng dự đoán kết quả học tập sinh viên bằng Machine Learning.
+Ứng dụng Streamlit minh họa cho tiểu luận học phần Nhập môn Khoa học dữ liệu.
 
-## Chức năng
-- Giao diện dashboard hiện đại
-- Dữ liệu sinh viên mô phỏng thực tế
-- Trực quan hóa dữ liệu
-- Huấn luyện Random Forest
-- Đánh giá Accuracy, F1-score, Confusion Matrix
-- Form dự đoán kết quả học tập
+## Nội dung app
 
-## Chạy cục bộ
+- Giới thiệu một số thuật toán học máy: KNN, Decision Tree, Random Forest, Logistic Regression.
+- Sử dụng các bộ dữ liệu thực tế có sẵn trong scikit-learn: Iris, Wine, Breast Cancer.
+- Trực quan hóa dữ liệu bằng biểu đồ.
+- Huấn luyện mô hình học máy.
+- Đánh giá mô hình bằng Accuracy, Precision, Recall, F1-score.
+- Cho phép nhập dữ liệu mới để dự đoán.
+
+## Cách chạy trên máy cá nhân
+
 ```bash
+pip install -r requirements.txt
 streamlit run app.py
+```
+
+## Triển khai trên Streamlit Cloud
+
+Main file path:
+
+```text
+app.py
 ```
