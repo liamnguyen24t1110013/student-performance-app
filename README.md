@@ -2,6 +2,12 @@
 
 Ứng dụng Streamlit cho tiểu luận học phần Nhập môn Khoa học dữ liệu.
 
+## Thuật toán sử dụng
+
+- Hồi quy Logistic
+- Cây quyết định
+- Random Forest
+
 ## File trong dự án
 
 - `app.py`: mã nguồn ứng dụng Streamlit
@@ -13,9 +19,10 @@
 ## Chức năng
 
 - Nhập dữ liệu sức khỏe trực tiếp
-- Dự đoán nguy cơ bệnh tim bằng Random Forest
+- Chọn thuật toán để dự đoán
+- So sánh Accuracy và F1-score của 3 thuật toán
 - Trực quan hóa dữ liệu bằng biểu đồ
-- Đánh giá mô hình bằng Accuracy, F1-score, Confusion Matrix
+- Đánh giá mô hình bằng Confusion Matrix
 - Hiển thị bảng dữ liệu CSV
 
 ## Lưu ý
