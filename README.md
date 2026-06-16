@@ -1,30 +1,26 @@
-# Tìm hiểu về một số thuật toán học máy và ứng dụng trong cuộc sống
+# Ứng dụng Machine Learning trong y tế: Dự đoán nguy cơ bệnh tim
 
-Ứng dụng Streamlit phục vụ tiểu luận học phần Nhập môn Khoa học dữ liệu.
+Ứng dụng Streamlit cho tiểu luận học phần Nhập môn Khoa học dữ liệu.
 
-## Nội dung
+## File trong dự án
 
-- Giao diện dashboard có background nổi bật
-- Giới thiệu 5 thuật toán học máy:
-  - Linear Regression
-  - Logistic Regression
-  - Decision Tree
-  - K-Nearest Neighbors
-  - Random Forest
-- So sánh thuật toán bằng biểu đồ
-- Trình bày ứng dụng học máy trong đời sống
-- Demo mô hình phân loại bằng Python trên bộ dữ liệu Iris
-- Dự đoán loài hoa bằng mô hình tốt nhất
-- Có biểu đồ, bảng dữ liệu, ma trận nhầm lẫn
+- `app.py`: mã nguồn ứng dụng Streamlit
+- `style.css`: giao diện CSS
+- `heart_health_data.csv`: dữ liệu sức khỏe
+- `requirements.txt`: thư viện cần cài
+- `README.md`: hướng dẫn
 
-## Công nghệ
+## Chức năng
 
-- Python
-- Streamlit
-- Pandas
-- NumPy
-- Matplotlib
-- Scikit-learn
+- Nhập dữ liệu sức khỏe trực tiếp
+- Dự đoán nguy cơ bệnh tim bằng Random Forest
+- Trực quan hóa dữ liệu bằng biểu đồ
+- Đánh giá mô hình bằng Accuracy, F1-score, Confusion Matrix
+- Hiển thị bảng dữ liệu CSV
+
+## Lưu ý
+
+Ứng dụng chỉ phục vụ mục đích học tập, không thay thế chẩn đoán hoặc tư vấn y tế chuyên môn.
 
 ## Chạy ứng dụng
 
